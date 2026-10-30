@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Double D Roofing — Portal (Connected)</title>
+<style>
+  :root { --dd-red: #8B1E1E; --dd-dark: #1a1a1a; --accent: #1F4E79; }
+  body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f8f9fa; color: #333; }
+  header { background: white; border-bottom: 3px solid var(--dd-red); padding: 12px 20px; }
+  header h1 { margin: 0; color: var(--dd-dark); }
+  nav { background: var(--dd-dark); padding: 8px 20px; }
+  nav button { background: none; border: none; color: white; padding: 8px 16px; cursor: pointer; }
+  nav button.active, nav button:hover { background: var(--dd-red); border-radius: 4px; }
+  .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card h2 { margin-top: 0; color: var(--accent); }
+  .btn { background: var(--dd-red); color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-weight: bold; margin-bottom: 4px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+  .hidden { display: none; }
+  .status { font-size: 0.85em; padding: 4px 0; }
+  .status.error { color: #c0392b; }
+  .status.ok { color: #27ae60; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Double D Roofing — Connected Portal</h1>
+  <div class="status" id="connection-status">Connecting to Supabase...</div>
+</header>
+<nav>
+  <button class="active" onclick="show('proposals')">Proposals</button>
+  <button onclick="show('membership')">Membership</button>
+  <button onclick="show('customers')">Customers</button>
+</nav>
+<div class="container">
+
+  <div id="proposals" class="section">
+    <div class="card">
+      <h2>Create Proposal</h2>
+      <div class="form-row"><label>Customer Name</label><input type="text" id="prop-customer" placeholder="Customer name"></div>
+      <div class="form-row"><label>Job Type</label>
+        <select id="prop-type">
+          <option value="residential">Residential Roofing</option>
+          <option value="commercial">Commercial</option>
+          <option value="membership">Roof Care Membership</option>
+          <option value="siding">Siding</option>
+          <option value="windows">Windows</option>
+          <option value="gutters">Gutters</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Description</label><textarea id="prop-desc" rows="2"></textarea></div>
+      <div class="form-row"><label>Subtotal</label><input type="number" id="prop-subtotal" value="0"></div>
+      <button class="btn" onclick="saveProposal()">Save Proposal to Supabase</button>
+      <p id="prop-result"></p>
+    </div>
+    <div class="card"><h2>Saved Proposals</h2><div id="proposal-list">Waiting...</div></div>
+  </div>
+
+  <div id="membership" class="section hidden">
+    <div class="card">
+      <h2>Membership Price Calculator</h2>
+      <div class="form-row"><label>Squares</label><input type="number" id="calc-squares" value="30" oninput="calcPrice()"></div>
+      <div class="form-row"><label>Pitch</label>
+        <select id="calc-pitch" onchange="calcPrice()">
+          <option value="1">Low / Moderate (≤6/12)</option>
+          <option value="1.15">Moderate (7-9/12) +15%</option>
+          <option value="1.25">Steep (10-12/12) +25%</option>
+          <option value="1.40">Very Steep (>12/12) +40%</option>
+        </select>
+      </div>
+      <div id="calc-results"></div>
+    </div>
+  </div>
+
+  <div id="customers" class="section hidden">
+    <div class="card">
+      <h2>Add Customer</h2>
+      <div class="form-row"><label>Name</label><input type="text" id="cust-name"></div>
+      <div class="form-row"><label>Email</label><input type="email" id="cust-email"></div>
+      <div class="form-row"><label>Address</label><input type="text" id="cust-address"></div>
+      <button class="btn" onclick="saveCustomer()">Save Customer</button>
+      <p id="cust-result"></p>
+    </div>
+    <div class="card"><h2>Customers</h2><div id="customer-list">Waiting...</div></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://ihyeoytjhybntnzgatnr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_f2TV0Fl3tlkR69w-xNfGvA_pju5siwN';
+
+const statusEl = document.getElementById('connection-status');
+let db; // renamed to avoid any conflict
+
+function setStatus(msg, isError = false) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status ' + (isError ? 'error' : 'ok');
+}
+
+try {
+  db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  setStatus('Connected to Supabase');
+  loadProposals();
+} catch (e) {
+  setStatus('Error: ' + e.message, true);
+  console.error(e);
+}
+
+window.show = function(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+  if (id === 'proposals') loadProposals();
+  if (id === 'customers') loadCustomers();
+};
+
+window.saveCustomer = async function() {
+  if (!db) return setStatus('Not connected', true);
+  const { error } = await db.from('customers').insert({
+    name: document.getElementById('cust-name').value,
+    email: document.getElementById('cust-email').value,
+    address: document.getElementById('cust-address').value
+  });
+  document.getElementById('cust-result').textContent = error ? 'Error: ' + error.message : 'Customer saved!';
+  if (!error) loadCustomers();
+};
+
+async function loadCustomers() {
+  if (!db) return;
+  const { data, error } = await db.from('customers').select('*').order('created_at', { ascending: false });
+  const el = document.getElementById('customer-list');
+  if (error) { el.textContent = 'Error: ' + error.message; return; }
+  el.innerHTML = data.length ? '<table><tr><th>Name</th><th>Email</th><th>Address</th></tr>' + 
+    data.map(c => `<tr><td>${c.name||''}</td><td>${c.email||''}</td><td>${c.address||''}</td></tr>`).join('') + '</table>' : 'No customers yet';
+}
+window.loadCustomers = loadCustomers;
+
+window.saveProposal = async function() {
+  if (!db) return setStatus('Not connected', true);
+  const subtotal = parseFloat(document.getElementById('prop-subtotal').value) || 0;
+  const isCommercial = document.getElementById('prop-type').value === 'commercial';
+  const tax = isCommercial ? subtotal * 0.0825 : 0;
+  const { error } = await db.from('proposals').insert({
+    job_type: document.getElementById('prop-type').value,
+    description: document.getElementById('prop-desc').value,
+    subtotal, is_commercial: isCommercial, tax_amount: tax, total: subtotal + tax, status: 'pending'
+  });
+  document.getElementById('prop-result').textContent = error ? 'Error: ' + error.message : 'Proposal saved!';
+  if (!error) loadProposals();
+};
+
+async function loadProposals() {
+  if (!db) return;
+  const { data, error } = await db.from('proposals').select('*').order('created_at', { ascending: false });
+  const el = document.getElementById('proposal-list');
+  if (error) { el.textContent = 'Error: ' + error.message; return; }
+  el.innerHTML = data.length ? '<table><tr><th>Type</th><th>Description</th><th>Total</th><th>Status</th></tr>' + 
+    data.map(p => `<tr><td>${p.job_type}</td><td>${p.description||''}</td><td>$${Number(p.total).toFixed(2)}</td><td>${p.status}</td></tr>`).join('') + '</table>' : 'No proposals yet';
+}
+window.loadProposals = loadProposals;
+
+window.calcPrice = function() {
+  const squares = parseFloat(document.getElementById('calc-squares').value) || 0;
+  const mult = parseFloat(document.getElementById('calc-pitch').value) || 1;
+  const extra = Math.max(0, squares - 30) * 8;
+  const bases = { Essential: 299, Premium: 549, 'GAF Preferred': 249, 'GAF Elite': 449 };
+  let html = '<table><tr><th>Tier</th><th>Price</th></tr>';
+  for (const [tier, base] of Object.entries(bases)) {
+    html += `<tr><td>${tier}</td><td>$${Math.round((base + extra) * mult)}</td></tr>`;
+  }
+  html += '</table>';
+  document.getElementById('calc-results').innerHTML = html;
+};
+
+calcPrice();
+</script>
+</body>
+</html>

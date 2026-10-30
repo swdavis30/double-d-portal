@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Double D Roofing — Operational Flows</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; max-width: 900px; margin: 30px auto; padding: 20px; background: #f8f9fa; color: #333; }
+  h1 { color: #8B1E1E; text-align: center; }
+  h2 { color: #1F4E79; border-bottom: 2px solid #8B1E1E; padding-bottom: 6px; margin-top: 32px; }
+  .flow { background: white; border-radius: 8px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .step { display: flex; align-items: flex-start; margin: 8px 0; }
+  .num { background: #8B1E1E; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.85em; margin-right: 12px; flex-shrink: 0; }
+  .note { background: #fff8e1; border-left: 4px solid #f9a825; padding: 8px 12px; margin: 8px 0 8px 36px; font-size: 0.9em; }
+  .optional { color: #666; font-style: italic; }
+  .footer { text-align: center; margin-top: 40px; font-size: 0.9em; color: #666; }
+</style>
+</head>
+<body>
+<h1>Double D Roofing<br>Operational Flows</h1>
+
+<div class="flow">
+<h2>1. Residential Roofing Job</h2>
+<div class="step"><div class="num">1</div><div>Staff creates proposal</div></div>
+<div class="step"><div class="num">2</div><div>Customer receives link and signs digitally</div></div>
+<div class="step"><div class="num">3</div><div>Signed proposal converts to invoice</div></div>
+<div class="step"><div class="num">4</div><div>Customer pays via Stripe (card), Cash, or Check</div></div>
+<div class="step"><div class="num">5</div><div>Job is scheduled (Google Calendar optional)</div></div>
+<div class="step"><div class="num">6</div><div>Photos and notes added</div></div>
+<div class="step"><div class="num">7</div><div>Job closed</div></div>
+</div>
+
+<div class="flow">
+<h2>2. Commercial Job</h2>
+<div class="step"><div class="num">1</div><div>Same as residential, with these additions:</div></div>
+<div class="step"><div class="num">•</div><div>Job type = Commercial</div></div>
+<div class="step"><div class="num">•</div><div>8.25% sales tax calculated and shown on proposal and invoice</div></div>
+<div class="step"><div class="num">•</div><div>Payment options: Stripe, Cash, or Check</div></div>
+</div>
+
+<div class="flow">
+<h2>3. Membership Enrollment — Double D Install</h2>
+<div class="step"><div class="num">1</div><div>Roof installed by Double D with qualifying GAF product</div></div>
+<div class="step"><div class="num">2</div><div>Warranty type recorded</div></div>
+<div class="step"><div class="num">3</div><div>Staff enrolls customer in a tier (calculator used if size/pitch adjustment needed)</div></div>
+<div class="step"><div class="num">4</div><div>Measurement report upload <span class="optional">(recommended, not required)</span></div></div>
+<div class="note">If measurements come from insurance papers or another source, store the numbers and note the source (e.g. “Insurance papers – 2024 claim”).</div>
+<div class="step"><div class="num">5</div><div>Customer signs membership agreement</div></div>
+<div class="step"><div class="num">6</div><div>Membership becomes active with visit schedule</div></div>
+</div>
+
+<div class="flow">
+<h2>4. Membership Enrollment — Existing Roof (Not Double D Install)</h2>
+<div class="step"><div class="num">1</div><div>Initial inspection performed</div></div>
+<div class="step"><div class="num">2</div><div>Qualifying repairs completed if needed</div></div>
+<div class="step"><div class="num">3</div><div>Original install date and product type (if known) recorded</div></div>
+<div class="step"><div class="num">4</div><div>Inspection report / measurement upload <span class="optional">(recommended, not required)</span></div></div>
+<div class="note">Same as above — can note source if measurements come from insurance papers or elsewhere.</div>
+<div class="step"><div class="num">5</div><div>Staff enrolls customer in appropriate tier</div></div>
+<div class="step"><div class="num">6</div><div>Customer signs membership agreement</div></div>
+<div class="step"><div class="num">7</div><div>Membership becomes active</div></div>
+</div>
+
+<div class="flow">
+<h2>5. Ongoing Membership Visits</h2>
+<div class="step"><div class="num">1</div><div>Upcoming visits appear on staff dashboard</div></div>
+<div class="step"><div class="num">2</div><div>Team completes inspection / gutter cleaning</div></div>
+<div class="step"><div class="num">3</div><div>Notes and photos added</div></div>
+<div class="step"><div class="num">4</div><div>Visit marked complete</div></div>
+<div class="step"><div class="num">5</div><div>Next visit scheduled</div></div>
+<div class="step"><div class="num">6</div><div>Customer can see history and request post-storm inspection</div></div>
+</div>
+
+<div class="flow">
+<h2>6. Upload Insurance Papers</h2>
+<div class="step"><div class="num">1</div><div>Staff or customer uploads insurance documents (PDF, photos of papers, adjuster reports, etc.)</div></div>
+<div class="step"><div class="num">2</div><div>Documents are stored permanently with the customer / property record</div></div>
+<div class="step"><div class="num">3</div><div>Staff adds a note describing the source and any key details (e.g. “2024 hail claim – squares and pitch taken from adjuster report”)</div></div>
+<div class="step"><div class="num">4</div><div>Measurement numbers (if present) can be entered into the membership calculator or property record</div></div>
+<div class="step"><div class="num">5</div><div>Documents remain available to staff and the customer in the portal</div></div>
+<div class="note">This flow can be used during membership enrollment, a new job, or at any time the customer provides insurance paperwork.</div>
+</div>
+
+<div class="flow">
+<h2>7. Customer Portal</h2>
+<div class="step"><div class="num">•</div><div>View membership status, warranty, next visit</div></div>
+<div class="step"><div class="num">•</div><div>View and sign proposals</div></div>
+<div class="step"><div class="num">•</div><div>Pay invoices (Stripe, or see instructions for cash/check)</div></div>
+<div class="step"><div class="num">•</div><div>See photos, measurement reports, and insurance papers</div></div>
+<div class="step"><div class="num">•</div><div>Request post-storm inspection</div></div>
+<div class="step"><div class="num">•</div><div>Direct contact option (phone, email, or simple form)</div></div>
+<div class="step"><div class="num">•</div><div>Simple question-answering bot for common customer service questions <span class="optional">(optional for beta)</span></div></div>
+</div>
+
+<div class="footer">
+Double D Roofing · Operational Flows<br>
+Updated with insurance papers upload flow
+</div>
+</body>
+</html>
