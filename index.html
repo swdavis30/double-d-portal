@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Double D Roofing — Portal</title>
+<style>
+  :root { --dd-red: #8B1E1E; --dd-dark: #1a1a1a; --accent: #1F4E79; }
+  body { font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f8f9fa; color: #333; }
+  header { background: white; border-bottom: 3px solid var(--dd-red); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; color: var(--dd-dark); }
+  nav { background: var(--dd-dark); padding: 8px 20px; }
+  nav button { background: none; border: none; color: white; padding: 8px 16px; cursor: pointer; }
+  nav button.active, nav button:hover { background: var(--dd-red); border-radius: 4px; }
+  .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card h2 { margin-top: 0; color: var(--accent); }
+  .btn { background: var(--dd-red); color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; }
+  .btn-outline { background: white; color: var(--dd-red); border: 1px solid var(--dd-red); }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-weight: bold; margin-bottom: 4px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+  .hidden { display: none; }
+  .status { font-size: 0.85em; padding: 4px 0; }
+  .status.error { color: #c0392b; }
+  .status.ok { color: #27ae60; }
+  #login-screen { max-width: 400px; margin: 60px auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+  #signature-pad { border: 1px solid #ccc; border-radius: 4px; background: #fff; touch-action: none; }
+  .sig-controls { margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="login-screen" class="card">
+  <h2>Double D Roofing Portal</h2>
+  <div class="form-row">
+    <label>Email</label>
+    <input type="email" id="login-email" placeholder="you@example.com">
+  </div>
+  <div class="form-row">
+    <label>Password</label>
+    <input type="password" id="login-password">
+  </div>
+  <button class="btn" onclick="login()">Log In</button>
+  <button class="btn btn-outline" onclick="signup()" style="margin-left:8px;">Sign Up</button>
+  <p id="login-message" class="status"></p>
+</div>
+
+
+<div id="view-banner" style="background:#fff3cd; padding:8px 20px; font-size:0.9em; display:none;"></div>
+
+<div id="sign-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; width:90%; max-width:450px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+  <h2>Sign Proposal</h2>
+  <canvas id="signature-pad" width="400" height="150"></canvas>
+  <div class="sig-controls" style="margin:8px 0;">
+    <button type="button" class="btn btn-outline" onclick="clearSignature()">Clear</button>
+  </div>
+  <button class="btn" onclick="submitSignature()">Submit Signature</button>
+  <button class="btn btn-outline" onclick="closeSign()" style="margin-left:8px;">Cancel</button>
+  <p id="sign-msg"></p>
+</div>
+
+<div id="edit-customer-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; width:90%; max-width:450px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+  <h2>Edit Customer</h2>
+  <input type="hidden" id="edit-cust-id">
+  <div class="form-row"><label>Name</label><input type="text" id="edit-cust-name"></div>
+  <div class="form-row"><label>Email</label><input type="email" id="edit-cust-email"></div>
+  <div class="form-row"><label>Phone</label><input type="tel" id="edit-cust-phone"></div>
+  <div class="form-row"><label>Address</label><input type="text" id="edit-cust-address"></div>
+  <button class="btn" onclick="saveCustomerEdit()">Save Changes</button>
+  <button class="btn btn-outline" onclick="closeEditCustomer()" style="margin-left:8px;">Cancel</button>
+  <p id="edit-cust-msg"></p>
+</div>
+
+<div id="agreement-modal" class="card" style="display:none; position:fixed; top:5%; left:50%; transform:translateX(-50%); z-index:1000; width:95%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+  <h2>Roof Care Membership Agreement</h2>
+  <div id="agreement-content" style="font-size:0.95em; line-height:1.5;"></div>
+  <div style="margin:16px 0;">
+    <label><strong>Customer Signature</strong></label>
+    <canvas id="agreement-pad" width="400" height="120" style="border:1px solid #ccc; border-radius:4px; background:#fff; touch-action:none;"></canvas>
+    <div style="margin-top:6px;">
+      <button type="button" class="btn btn-outline" onclick="clearAgreementPad()">Clear</button>
+    </div>
+  </div>
+  <button class="btn" onclick="submitAgreement()">Sign Agreement</button>
+  <button class="btn btn-outline" onclick="closeAgreement()" style="margin-left:8px;">Cancel</button>
+  <p id="agreement-msg"></p>
+</div>
+
+<div id="checklist-modal" class="card" style="display:none; position:fixed; top:5%; left:50%; transform:translateX(-50%); z-index:1000; width:95%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+  <h2>Field Inspection Checklist</h2>
+  <p style="font-size:0.9em; color:#555;">Check items as you inspect. Add notes at the bottom.</p>
+  <div id="checklist-items" style="margin:12px 0;">
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Shingles / panels secure and intact</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> No missing, cracked, or curled shingles</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Flashing sealed and in good condition</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Valleys clear and properly sealed</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Pipe boots and penetrations sealed</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Gutters clean and flowing</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Downspouts clear and directed away</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> No debris or standing water</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Attic / decking checked (if accessible)</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="chk"> Photos taken of overall and problem areas</label>
+  </div>
+  <div class="form-row">
+    <label>Inspection Notes</label>
+    <textarea id="inspection-notes" rows="3" placeholder="Any issues, recommendations, or observations"></textarea>
+  </div>
+  <button class="btn" onclick="submitChecklist()">Complete Visit</button>
+  <button class="btn btn-outline" onclick="closeChecklist()" style="margin-left:8px;">Cancel</button>
+  <p id="checklist-msg"></p>
+</div>
+
+<div id="initial-modal" class="card" style="display:none; position:fixed; top:5%; left:50%; transform:translateX(-50%); z-index:1000; width:95%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+  <h2>Initial Qualification Inspection</h2>
+  <p style="font-size:0.9em; color:#555;">For roofs not installed by Double D. Check condition before enrolling.</p>
+  <div id="initial-items" style="margin:12px 0;">
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Overall roof condition acceptable for program</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> No active leaks</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Shingles/panels have reasonable remaining life</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Flashing and penetrations in serviceable condition</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Gutters functional (or noted for repair)</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> No major structural concerns</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Photos of overall condition and any issues taken</label>
+    <label style="display:block; margin:6px 0;"><input type="checkbox" class="ichk"> Any needed repairs identified and quoted</label>
+  </div>
+  <div class="form-row">
+    <label>Original Install Date (if known)</label>
+    <input type="date" id="initial-install-date">
+  </div>
+  <div class="form-row">
+    <label>Product Type (if known)</label>
+    <input type="text" id="initial-product" placeholder="e.g. 30-year architectural">
+  </div>
+  <div class="form-row">
+    <label>Qualification Notes / Required Repairs</label>
+    <textarea id="initial-notes" rows="3" placeholder="Repairs needed to qualify, or general condition notes"></textarea>
+  </div>
+  <button class="btn" onclick="submitInitial()">Save Initial Inspection</button>
+  <button class="btn btn-outline" onclick="closeInitial()" style="margin-left:8px;">Cancel</button>
+  <p id="initial-msg"></p>
+</div>
+<div id="app" class="hidden">
+  <header>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <img src="logo.jpg" alt="Double D Roofing" style="height:48px; width:auto; border-radius:4px;" 
+           onerror="this.onerror=null; this.src='double-d-logo.jpg'; this.onerror=function(){this.style.display='none';}">
+      <h1 style="margin:0;">Double D Roofing</h1>
+    </div>
+    <div>
+      <span id="user-email" style="margin-right:12px; font-size:0.9em;"></span>
+      <button class="btn btn-outline" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+  <nav>
+    <button class="active" onclick="show('proposals')">Proposals</button>
+    <button onclick="show('membership')">Membership</button>
+    <button id="customers-nav" onclick="show('customers')">Customers</button>
+    <button onclick="show('invoices')">Invoices</button>
+  </nav>
+  <div class="container">
+    <div id="proposals" class="section">
+      <div class="card">
+        <h2>Create Proposal</h2>
+        <div class="form-row">
+          <label>Customer</label>
+          <select id="prop-customer">
+            <option value="">— Select customer —</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Job Type</label>
+          <select id="prop-type">
+            <option value="residential">Residential Roofing</option>
+            <option value="commercial">Commercial</option>
+            
+            <option value="siding">Siding</option>
+            <option value="windows">Windows</option>
+            <option value="gutters">Gutters</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Description</label><textarea id="prop-desc" rows="2"></textarea></div>
+        <div class="form-row"><label>Subtotal</label><input type="number" id="prop-subtotal" value="0"></div>
+        
+        <button class="btn" onclick="saveProposal()">Save Proposal</button>
+        <p id="prop-result"></p>
+      </div>
+      <div class="card"><h2>Saved Proposals</h2><div id="proposal-list">Loading...</div></div>
+    </div>
+
+    <div id="membership" class="section hidden">
+      <div class="card">
+        <h2>Double D Roof Care Membership</h2>
+        <p>Our membership keeps your roof protected with scheduled inspections and gutter cleanings. Members also get priority scheduling and documented history of every visit.</p>
+        
+        <h3 style="color:#1F4E79; margin-bottom:8px;">What’s Included in Every Membership</h3>
+        <ul>
+          <li>Professional roof inspection(s)</li>
+          <li>Gutter cleaning(s)</li>
+          <li>Photos and notes from every visit stored in your portal</li>
+          <li>Priority scheduling for any repairs</li>
+          <li>Free post-storm inspection requests</li>
+          <li>Digital record of your roof history</li>
+        </ul>
+
+        <h3 style="color:#1F4E79; margin-bottom:8px;">Membership Tiers</h3>
+        <table>
+          <tr><th>Tier</th><th>Base Price</th><th>Visits per Year</th><th>Best For</th></tr>
+          <tr><td><strong>Essential</strong></td><td>$299</td><td>1 inspection + gutter cleaning</td><td>Standard maintenance</td></tr>
+          <tr><td><strong>Premium</strong></td><td>$549</td><td>2 inspections + gutter cleanings</td><td>Maximum protection</td></tr>
+          <tr><td><strong>GAF Preferred</strong></td><td>$249</td><td>1 inspection + gutter cleaning</td><td>GAF roofs installed by Double D</td></tr>
+          <tr><td><strong>GAF Elite</strong></td><td>$449</td><td>2 inspections + gutter cleanings</td><td>GAF roofs installed by Double D</td></tr>
+        </table>
+        <p style="font-size:0.9em; color:#555; margin-top:12px;">
+          <strong>Pricing adjustments:</strong> +$8 per square over 30 squares.  
+          Pitch multipliers — Moderate (7–9/12) +15%, Steep (10–12/12) +25%, Very Steep (>12/12) +40%.
+        </p>
+        <p style="font-size:0.9em; color:#555;">
+          GAF tiers are available when Double D installed the roof with a qualifying GAF product and the warranty is on file.
+        </p>
+      </div>
+      <div class="card">
+        <h2>Enroll in Roof Care Membership</h2>
+        <div class="form-row">
+          <label>Customer</label>
+          <select id="mem-customer"><option value="">— Select customer —</option></select>
+        </div>
+        <div class="form-row">
+          <label>Tier</label>
+          <select id="mem-tier" onchange="calcPrice()">
+            <option value="Essential">Essential</option>
+            <option value="Premium">Premium</option>
+            <option value="GAF Preferred">GAF Preferred</option>
+            <option value="GAF Elite">GAF Elite</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Squares</label><input type="number" id="calc-squares" value="30" oninput="calcPrice()"></div>
+        <div class="form-row"><label>Pitch</label>
+          <select id="calc-pitch" onchange="calcPrice()">
+            <option value="1">Low / Moderate (≤6/12)</option>
+            <option value="1.15">Moderate (7-9/12) +15%</option>
+            <option value="1.25">Steep (10-12/12) +25%</option>
+            <option value="1.40">Very Steep (>12/12) +40%</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Roof Type</label>
+          <select id="roof-type">
+            <option value="">— Select —</option>
+            <option value="Asphalt Shingle">Asphalt Shingle</option>
+            <option value="Metal">Metal</option>
+            <option value="Tile">Tile</option>
+            <option value="Flat / Low Slope">Flat / Low Slope</option>
+            <option value="Stone Coated Steel">Stone Coated Steel</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Roof Age</label>
+          <select id="roof-age">
+            <option value="">— Select —</option>
+            <option value="0-5 years">0-5 years</option>
+            <option value="6-10 years">6-10 years</option>
+            <option value="11-15 years">11-15 years</option>
+            <option value="16-20 years">16-20 years</option>
+            <option value="20+ years">20+ years</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>GAF Product (if applicable)</label>
+          <select id="gaf-product">
+            <option value="">— None / Unknown —</option>
+            <option value="Timberline HDZ">Timberline HDZ</option>
+            <option value="Timberline UHDZ">Timberline UHDZ</option>
+            <option value="Timberline NS">Timberline NS</option>
+            <option value="Grand Sequoia">Grand Sequoia</option>
+            <option value="Camelot">Camelot</option>
+            <option value="Other GAF">Other GAF</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Original Install Date</label>
+          <input type="date" id="install-date">
+        </div>
+        <div class="form-row">
+          <label>Roof Notes</label>
+          <textarea id="roof-notes" rows="2" placeholder="Any additional details"></textarea>
+        </div>
+        <div id="calc-results" style="margin:12px 0; font-weight:bold;"></div>
+        <button class="btn" onclick="enrollMembership()">Enroll Customer</button>
+        <p id="mem-result"></p>
+      </div>
+      <div class="card" id="upcoming-card" style="display:none; border-left:4px solid #8B1E1E;">
+        <h2 style="margin-top:0;">Upcoming Visits (next 10 days)</h2>
+        <div id="upcoming-list"></div>
+      </div>
+      <div class="card">
+        <h2>Active Memberships</h2>
+        <div id="membership-list">Loading...</div>
+      </div>
+    </div>
+
+    <div id="customers" class="section hidden">
+      <div class="card">
+        <h2>Add Customer</h2>
+        <div class="form-row"><label>Name</label><input type="text" id="cust-name" placeholder="Full name"></div>
+        <div class="form-row"><label>Email</label><input type="email" id="cust-email" placeholder="email@example.com"></div>
+        <div class="form-row"><label>Phone</label><input type="tel" id="cust-phone" placeholder="(806) 555-1234"></div>
+        <div class="form-row"><label>Address</label><input type="text" id="cust-address" placeholder="Street, City, TX"></div>
+        <button class="btn" onclick="saveCustomer()">Save Customer</button>
+        <p id="cust-result"></p>
+      </div>
+      <div class="card"><h2>Customers</h2><div id="customer-list">Loading...</div></div>
+    </div>
+  
+    <div id="invoices" class="section hidden">
+      <div class="card" id="create-invoice-card">
+        <h2>Create Custom Invoice</h2>
+        <div class="form-row">
+          <label>Customer</label>
+          <select id="inv-customer"><option value="">— Select customer —</option></select>
+        </div>
+        <div class="form-row">
+          <label>Description</label>
+          <textarea id="inv-desc" rows="2"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Amount</label>
+          <input type="number" id="inv-amount" value="0">
+        </div>
+        <div class="form-row">
+          <label>Commercial (adds 8.25% tax)</label>
+          <input type="checkbox" id="inv-commercial">
+        </div>
+        <button class="btn" onclick="createCustomInvoice()">Create Invoice</button>
+        <p id="inv-create-result"></p>
+      </div>
+      <div class="card">
+        <h2>Invoices</h2>
+        <div id="invoice-list">Loading...</div>
+      </div>
+    </div>
+</div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://ihyeoytjhybntnzgatnr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_f2TV0Fl3tlkR69w-xNfGvA_pju5siwN';
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let customersCache = [];
+let canvas, ctx, drawing = false;
+
+function initSignature() {
+  canvas = document.getElementById('signature-pad');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function start(e) { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+  function move(e) { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+  function end() { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseout', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+}
+
+window.clearSignature = function() {
+  if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+function showApp(user) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('user-email').textContent = user.email;
+  // Check if customer
+  db.from('customers').select('id').eq('email', user.email).maybeSingle().then(({ data }) => {
+    const banner = document.getElementById('view-banner');
+    if (data) {
+      banner.style.display = 'block';
+      banner.textContent = 'Customer view — you are seeing only your own records.';
+      // Hide create sections
+      document.querySelectorAll('.card').forEach(card => {
+        if (card.querySelector('h2') && (card.querySelector('h2').textContent.includes('Create') || card.querySelector('h2').textContent.includes('Enroll') || card.querySelector('h2').textContent.includes('Add Customer'))) {
+          card.style.display = 'none';
+        }
+      });
+      // Hide convert buttons
+      document.querySelectorAll('.convert-btn').forEach(btn => btn.style.display = 'none');
+      // Hide Customers tab
+      const custNav = document.getElementById('customers-nav');
+      if (custNav) custNav.style.display = 'none';
+    } else {
+      banner.style.display = 'block';
+      banner.textContent = 'Staff view — full access.';
+    }
+  });
+  initSignature();
+  loadCustomers().then(() => loadProposals());
+}
+
+db.auth.getSession().then(({ data: { session } }) => {
+  if (session) showApp(session.user);
+  else showLogin();
+});
+
+window.login = async function() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  const msg = document.getElementById('login-message');
+  if (error) { msg.textContent = error.message; msg.className = 'status error'; }
+  else { showApp(data.user); }
+};
+
+window.signup = async function() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const { data, error } = await db.auth.signUp({ email, password });
+  const msg = document.getElementById('login-message');
+  if (error) { msg.textContent = error.message; msg.className = 'status error'; }
+  else { msg.textContent = 'Account created. Check your email to confirm, then log in.'; msg.className = 'status ok'; }
+};
+
+window.logout = async function() {
+  await db.auth.signOut();
+  showLogin();
+};
+
+window.show = function(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+  if (id === 'proposals') { loadProposals(); setTimeout(initSignature, 100); }
+  if (id === 'customers') loadCustomers();
+  if (id === 'invoices') { loadCustomers(); loadInvoices(); }
+  if (id === 'membership') { loadCustomers(); loadMemberships(); loadUpcoming(); 
+
+function forceHideCustomerControls() {
+  db.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: cust } = await db.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+    if (cust) {
+      document.querySelectorAll('.staff-only').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.customer-only').forEach(el => el.style.display = 'inline');
+      document.querySelectorAll('.visit-action button').forEach(btn => {
+        const text = btn.textContent || '';
+        if (text.includes('Complete Visit') || text.includes('Create Invoice') || text.includes('Initial Inspection')) {
+          btn.style.display = 'none';
+          btn.remove();
+        }
+      });
+      document.querySelectorAll('.convert-btn').forEach(btn => btn.remove());
+      const custNav = document.getElementById('customers-nav');
+      if (custNav) custNav.style.display = 'none';
+    }
+  });
+}
+setInterval(forceHideCustomerControls, 1000);
+
+function hideConvertIfCustomer() {
+  db.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: cust } = await db.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+    if (cust) {
+      document.querySelectorAll('.convert-btn').forEach(btn => {
+        btn.style.display = 'none';
+        btn.remove();
+      });
+      document.querySelectorAll('#create-invoice-card, .card').forEach(card => { if (card.querySelector('h2') && card.querySelector('h2').textContent.includes('Enroll')) card.style.display = 'none'; });
+      document.querySelectorAll('.visit-action, .visit-action button').forEach(el => {
+        el.style.display = 'none';
+        if (el.tagName === 'BUTTON') el.remove();
+      });
+      const custNav = document.getElementById('customers-nav');
+      if (custNav) custNav.style.display = 'none';
+    }
+  });
+}
+// Run after proposals load
+const originalLoadProposals = loadProposals;
+loadProposals = async function() {
+  await originalLoadProposals();
+  hideConvertIfCustomer();
+  setTimeout(hideConvertIfCustomer, 300);
+};
+window.loadProposals = loadProposals;
+
+calcPrice(); }
+};
+
+async function loadCustomers() {
+  const { data, error } = await db.from('customers').select('*').order('name');
+  const el = document.getElementById('customer-list');
+  const select = document.getElementById('prop-customer');
+  if (error) { if (el) el.textContent = 'Error: ' + error.message; return; }
+  customersCache = data || [];
+  if (el) {
+    el.innerHTML = customersCache.length ? '<table><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>' + 
+      customersCache.map(c => `<tr>
+  <td>${c.name||''}</td>
+  <td>${c.email||''}</td>
+  <td>${c.phone||'—'}</td>
+  <td>${c.address||''}</td>
+  <td><button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="editCustomer('${c.id}')">Edit</button></td>
+</tr>`).join('') + '</table>' : 'No customers yet';
+  }
+  if (select) {
+    select.innerHTML = '<option value="">— Select customer —</option>' + 
+      customersCache.map(c => `<option value="${c.id}">${c.name || 'Unnamed'} (${c.email || 'no email'})</option>`).join('');
+  }
+}
+window.loadCustomers = loadCustomers;
+
+
+window.editCustomer = function(id) {
+  const c = customersCache.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('edit-cust-id').value = c.id;
+  document.getElementById('edit-cust-name').value = c.name || '';
+  document.getElementById('edit-cust-email').value = c.email || '';
+  document.getElementById('edit-cust-phone').value = c.phone || '';
+  document.getElementById('edit-cust-address').value = c.address || '';
+  document.getElementById('edit-customer-modal').style.display = 'block';
+};
+
+window.closeEditCustomer = function() {
+  document.getElementById('edit-customer-modal').style.display = 'none';
+};
+
+window.saveCustomerEdit = async function() {
+  const id = document.getElementById('edit-cust-id').value;
+  const { error } = await db.from('customers').update({
+    name: document.getElementById('edit-cust-name').value,
+    email: document.getElementById('edit-cust-email').value,
+    phone: document.getElementById('edit-cust-phone').value,
+    address: document.getElementById('edit-cust-address').value
+  }).eq('id', id);
+  const msg = document.getElementById('edit-cust-msg');
+  if (error) { msg.textContent = 'Error: ' + error.message; }
+  else {
+    msg.textContent = 'Saved!';
+    closeEditCustomer();
+    loadCustomers();
+  }
+};
+
+window.saveCustomer = async function() {
+  const { error } = await db.from('customers').insert({
+    name: document.getElementById('cust-name').value,
+    email: document.getElementById('cust-email').value,
+    phone: document.getElementById('cust-phone').value,
+    address: document.getElementById('cust-address').value
+  });
+  document.getElementById('cust-result').textContent = error ? 'Error: ' + error.message : 'Customer saved!';
+  if (!error) {
+    document.getElementById('cust-name').value = '';
+    document.getElementById('cust-email').value = '';
+    document.getElementById('cust-address').value = '';
+    document.getElementById('cust-phone').value = '';
+    loadCustomers();
+  }
+};
+
+window.saveProposal = async function() {
+  const customerId = document.getElementById('prop-customer').value;
+  if (!customerId) {
+    document.getElementById('prop-result').textContent = 'Please select a customer';
+    return;
+  }
+  const subtotal = parseFloat(document.getElementById('prop-subtotal').value) || 0;
+  const isCommercial = document.getElementById('prop-type').value === 'commercial';
+  const tax = isCommercial ? subtotal * 0.0825 : 0;
+  const signature = canvas ? canvas.toDataURL() : null;
+
+  const { error } = await db.from('proposals').insert({
+    customer_id: customerId,
+    job_type: document.getElementById('prop-type').value,
+    description: document.getElementById('prop-desc').value,
+    subtotal, is_commercial: isCommercial, tax_amount: tax, total: subtotal + tax,
+    status: 'pending',
+    signature: null
+  });
+  document.getElementById('prop-result').textContent = error ? 'Error: ' + error.message : 'Proposal saved!';
+  if (!error) {
+    document.getElementById('prop-desc').value = '';
+    document.getElementById('prop-subtotal').value = '0';
+    clearSignature();
+    loadProposals();
+  }
+};
+
+async function loadProposals() {
+  const session = (await db.auth.getSession()).data.session;
+  const userEmail = session?.user?.email;
+  let query = db.from('proposals').select('*, customers(name, email)').order('created_at', { ascending: false });
+  // Customer view: only show proposals linked to a customer with matching email
+  const { data: myCustomer } = await db.from('customers').select('id').eq('email', userEmail).maybeSingle();
+  if (myCustomer) {
+    query = query.eq('customer_id', myCustomer.id);
+  }
+  const { data, error } = await query;
+  const el = document.getElementById('proposal-list');
+  if (error) { el.textContent = 'Error: ' + error.message; return; }
+  
+// Hide convert buttons if customer view
+setTimeout(() => {
+  db.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: cust } = await db.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+    if (cust) {
+      document.querySelectorAll('.convert-btn').forEach(btn => btn.style.display = 'none');
+    }
+  });
+}, 100);
+el.innerHTML = data.length ? '<table><tr><th>Customer</th><th>Type</th><th>Description</th><th>Total</th><th>Status</th><th>Signature</th></tr>' + 
+    data.map(p => `<tr>
+      <td>${p.customers?.name || '—'}</td>
+      <td>${p.job_type}</td>
+      <td>${p.description||''}</td>
+      <td>$${Number(p.total).toFixed(2)}</td>
+      <td>${p.status}</td>
+      <td>${p.signature ? '<img src="'+p.signature+'" style="height:40px; border:1px solid #eee;">' : (p.status === 'pending' ? '<button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="openSign(\''+p.id+'\')">Sign</button>' : '—')}</td>
+      <td class="convert-cell">${(p.status === 'signed' && p.signature) ? '<button class="btn convert-btn" style="padding:4px 8px; font-size:0.8em;" onclick="convertToInvoice(\''+p.id+'\')">Convert to Invoice</button>' : (p.status === 'pending' ? '<span style="color:#999; font-size:0.85em;">Awaiting signature</span>' : '')}</td>
+    </tr>`).join('') + '</table>' : 'No proposals yet';
+}
+
+
+window.convertToInvoice = async function(proposalId) {
+  const { data: prop, error: e1 } = await db.from('proposals').select('*').eq('id', proposalId).single();
+  if (e1 || !prop) { alert('Could not load proposal'); return; }
+  if (prop.status !== 'signed' || !prop.signature || prop.signature.length < 100) {
+    alert('Client signature is required before converting to an invoice.');
+    return;
+  }
+  const { error } = await db.from('invoices').insert({
+    proposal_id: prop.id,
+    customer_id: prop.customer_id,
+    description: prop.description,
+    subtotal: prop.subtotal,
+    tax_amount: prop.tax_amount,
+    total: prop.total,
+    status: 'unpaid'
+  });
+  if (error) { alert('Error: ' + error.message); return; }
+  await db.from('proposals').update({ status: 'invoiced' }).eq('id', proposalId);
+  alert('Invoice created');
+  loadProposals();
+  if (document.getElementById('invoices') && !document.getElementById('invoices').classList.contains('hidden')) loadInvoices();
+};
+
+async function loadInvoices() {
+  const session = (await db.auth.getSession()).data.session;
+  const userEmail = session?.user?.email;
+  let query = db.from('invoices').select('*, customers(name)').order('created_at', { ascending: false });
+  const { data: myCustomer } = await db.from('customers').select('id').eq('email', userEmail).maybeSingle();
+  if (myCustomer) {
+    query = query.eq('customer_id', myCustomer.id);
+  }
+  const { data, error } = await query;
+  const el = document.getElementById('invoice-list');
+  if (!el) return;
+  if (error) { el.textContent = 'Error: ' + error.message; return; }
+  el.innerHTML = data.length ? '<table><tr><th>Customer</th><th>Description</th><th>Total</th><th>Status</th></tr>' +
+    data.map(i => {
+    const isUnpaid = i.status === 'unpaid';
+    return `<tr>
+      <td>${i.customers?.name || '—'}</td>
+      <td>${i.description||''}</td>
+      <td>$${Number(i.total).toFixed(2)}</td>
+      <td>${i.status}</td>
+      <td>${i.payment_method || '—'}</td>
+      <td class="pay-action">${isUnpaid ? `
+        <span class="staff-only">
+          <select id="pay-${i.id}" style="padding:4px;">
+            <option value="cash">Cash</option>
+            <option value="check">Check</option>
+            <option value="stripe">Stripe</option>
+          </select>
+          <button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="markPaid('${i.id}')">Mark Paid</button>
+        </span>
+        <span class="customer-only" style="display:none;">
+          <button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="alert('Stripe payment link will go here')">Pay with Stripe</button>
+          <div style="font-size:0.8em; color:#555; margin-top:4px;">Or pay by cash or check in person / by mail.</div>
+        </span>
+      ` : ''}</td>
+    </tr>`;
+  }).join('') + '</table>' : 'No invoices yet';
+}
+window.loadInvoices = loadInvoices;
+
+
+
+
+
+let agreementCanvas, agreementCtx, agreementDrawing = false, currentAgreementId = null;
+
+function initAgreementPad() {
+  agreementCanvas = document.getElementById('agreement-pad');
+  if (!agreementCanvas) return;
+  agreementCtx = agreementCanvas.getContext('2d');
+  agreementCtx.strokeStyle = '#000';
+  agreementCtx.lineWidth = 2;
+  agreementCtx.lineCap = 'round';
+  function getPos(e) {
+    const rect = agreementCanvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    return { x, y };
+  }
+  function start(e) { agreementDrawing = true; const p = getPos(e); agreementCtx.beginPath(); agreementCtx.moveTo(p.x, p.y); e.preventDefault(); }
+  function move(e) { if (!agreementDrawing) return; const p = getPos(e); agreementCtx.lineTo(p.x, p.y); agreementCtx.stroke(); e.preventDefault(); }
+  function end() { agreementDrawing = false; }
+  agreementCanvas.onmousedown = start;
+  agreementCanvas.onmousemove = move;
+  agreementCanvas.onmouseup = end;
+  agreementCanvas.onmouseout = end;
+  agreementCanvas.ontouchstart = start;
+  agreementCanvas.ontouchmove = move;
+  agreementCanvas.ontouchend = end;
+}
+
+window.clearAgreementPad = function() {
+  if (agreementCtx) agreementCtx.clearRect(0, 0, agreementCanvas.width, agreementCanvas.height);
+};
+
+window.openAgreement = async function(id) {
+  currentAgreementId = id;
+  const { data: m } = await db.from('memberships').select('*, customers(name)').eq('id', id).single();
+  if (!m) return;
+  const visits = (m.tier === 'Premium' || m.tier === 'GAF Elite') ? '2 inspections + gutter cleanings' : '1 inspection + gutter cleaning';
+  document.getElementById('agreement-content').innerHTML = `
+    <p><strong>Customer:</strong> ${m.customers?.name || '—'}</p>
+    <p><strong>Membership Tier:</strong> ${m.tier}</p>
+    <p><strong>Annual Investment:</strong> $${m.annual_price}</p>
+    <p><strong>Term:</strong> 1 year (expires ${m.expires_on || '—'})</p>
+    <hr>
+    <p><strong>Double D Roof Care agrees to provide:</strong></p>
+    <ul>
+      <li>${visits} per year</li>
+      <li>Professional roof inspection with photos and notes stored in your portal</li>
+      <li>Gutter cleaning at each visit</li>
+      <li>Priority scheduling for any recommended repairs</li>
+      <li>Free post-storm inspection requests</li>
+      <li>Digital record of your roof history</li>
+      <li>Documented condition of your roof at each visit</li>
+    </ul>
+    <p>This membership helps protect your investment and gives you peace of mind that your roof is being monitored by Double D Roofing.</p>
+    <p style="font-size:0.9em; color:#555;">By signing below, you agree to the terms of this Roof Care Membership.</p>
+  `;
+  document.getElementById('agreement-modal').style.display = 'block';
+  setTimeout(initAgreementPad, 50);
+};
+
+window.closeAgreement = function() {
+  document.getElementById('agreement-modal').style.display = 'none';
+  clearAgreementPad();
+  currentAgreementId = null;
+};
+
+window.submitAgreement = async function() {
+  if (!currentAgreementId || !agreementCanvas) return;
+  const sig = agreementCanvas.toDataURL();
+  if (sig.length < 100) {
+    document.getElementById('agreement-msg').textContent = 'Please sign above';
+    return;
+  }
+  const { error } = await db.from('memberships').update({
+    agreement_signature: sig,
+    agreement_signed_at: new Date().toISOString()
+  }).eq('id', currentAgreementId);
+  if (error) {
+    document.getElementById('agreement-msg').textContent = 'Error: ' + error.message;
+  } else {
+    document.getElementById('agreement-msg').textContent = 'Agreement signed and saved!';
+    setTimeout(() => { closeAgreement(); loadMemberships(); }, 1000);
+  }
+};
+
+window.invoiceMembership = async function(membershipId) {
+  const { data: mem, error: e1 } = await db.from('memberships').select('*, customers(name)').eq('id', membershipId).single();
+  if (e1 || !mem) { alert('Could not load membership'); return; }
+  const { error } = await db.from('invoices').insert({
+    customer_id: mem.customer_id,
+    description: mem.tier + ' Roof Care Membership',
+    subtotal: mem.annual_price,
+    tax_amount: 0,
+    total: mem.annual_price,
+    status: 'unpaid'
+  });
+  if (error) alert('Error: ' + error.message);
+  else {
+    alert('Invoice created for ' + (mem.customers?.name || 'customer') + ' — $' + mem.annual_price);
+    if (typeof loadInvoices === 'function') loadInvoices();
+  }
+};
+
+
+let currentChecklistId = null;
+
+
+let currentInitialId = null;
+
+window.openInitial = function(id) {
+  currentInitialId = id;
+  document.querySelectorAll('#initial-items .ichk').forEach(c => c.checked = false);
+  document.getElementById('initial-install-date').value = '';
+  document.getElementById('initial-product').value = '';
+  document.getElementById('initial-notes').value = '';
+  document.getElementById('initial-msg').textContent = '';
+  document.getElementById('initial-modal').style.display = 'block';
+};
+
+window.closeInitial = function() {
+  document.getElementById('initial-modal').style.display = 'none';
+  currentInitialId = null;
+};
+
+window.submitInitial = async function() {
+  if (!currentInitialId) return;
+  const checks = [];
+  document.querySelectorAll('#initial-items label').forEach(label => {
+    const cb = label.querySelector('input');
+    if (cb && cb.checked) checks.push(label.textContent.trim());
+  });
+  const notes = document.getElementById('initial-notes').value;
+  const install = document.getElementById('initial-install-date').value;
+  const product = document.getElementById('initial-product').value;
+  const summary = 'INITIAL INSPECTION\nChecked: ' + (checks.join(', ') || 'None') +
+    (install ? '\nInstall date: ' + install : '') +
+    (product ? '\nProduct: ' + product : '') +
+    (notes ? '\nNotes: ' + notes : '');
+  
+  const { data: mem } = await db.from('memberships').select('roof_notes').eq('id', currentInitialId).single();
+  const existing = mem?.roof_notes || '';
+  const { error } = await db.from('memberships').update({
+    roof_notes: (existing + '\n' + summary).trim(),
+    install_date: install || null
+  }).eq('id', currentInitialId);
+  
+  if (error) {
+    document.getElementById('initial-msg').textContent = 'Error: ' + error.message;
+  } else {
+    document.getElementById('initial-msg').textContent = 'Initial inspection saved!';
+    setTimeout(() => { closeInitial(); loadMemberships(); }, 800);
+  }
+};
+
+window.openChecklist = function(id) {
+  currentChecklistId = id;
+  document.querySelectorAll('#checklist-items .chk').forEach(c => c.checked = false);
+  document.getElementById('inspection-notes').value = '';
+  document.getElementById('checklist-msg').textContent = '';
+  document.getElementById('checklist-modal').style.display = 'block';
+};
+
+window.closeChecklist = function() {
+  document.getElementById('checklist-modal').style.display = 'none';
+  currentChecklistId = null;
+};
+
+window.submitChecklist = async function() {
+  if (!currentChecklistId) return;
+  const checks = [];
+  document.querySelectorAll('#checklist-items label').forEach(label => {
+    const cb = label.querySelector('input');
+    if (cb && cb.checked) checks.push(label.textContent.trim());
+  });
+  const notes = document.getElementById('inspection-notes').value;
+  const summary = 'Checked: ' + (checks.join(', ') || 'None') + (notes ? '\nNotes: ' + notes : '');
+  
+  // Complete the visit and store notes in roof_notes for now (or we can add a visits table later)
+  const { data: mem } = await db.from('memberships').select('roof_notes, visits_remaining, expires_on').eq('id', currentChecklistId).single();
+  const remaining = Math.max(0, (Number(mem?.visits_remaining) || 0) - 1);
+  let nextVisit = null;
+  if (remaining > 0 && mem?.expires_on) nextVisit = mem.expires_on;
+  
+  const existingNotes = mem?.roof_notes || '';
+  const newNotes = existingNotes + '\n--- Visit ' + new Date().toLocaleDateString() + ' ---\n' + summary;
+  
+  const { error } = await db.from('memberships').update({
+    visits_remaining: remaining,
+    next_visit: nextVisit,
+    roof_notes: newNotes.trim()
+  }).eq('id', currentChecklistId);
+  
+  if (error) {
+    document.getElementById('checklist-msg').textContent = 'Error: ' + error.message;
+  } else {
+    document.getElementById('checklist-msg').textContent = 'Visit completed and notes saved!';
+    setTimeout(() => { closeChecklist(); loadMemberships(); }, 800);
+  }
+};
+
+window.completeVisit = async function(membershipId) {
+  const { data: mem, error: e1 } = await db.from('memberships').select('*').eq('id', membershipId).single();
+  if (e1 || !mem) { alert('Could not load membership'); return; }
+  const remaining = Math.max(0, (Number(mem.visits_remaining) || 0) - 1);
+  let nextVisit = null;
+  if (remaining > 0) {
+    // Second visit = end of membership year (use expires_on if available, otherwise 1 year from now)
+    if (mem.expires_on) {
+      nextVisit = mem.expires_on;
+    } else {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 1);
+      nextVisit = d.toISOString().slice(0, 10);
+    }
+  }
+  const { data, error } = await db.from('memberships')
+    .update({ visits_remaining: remaining, next_visit: nextVisit })
+    .eq('id', membershipId)
+    .select();
+  if (error) {
+    alert('Error updating visit: ' + error.message);
+    console.error(error);
+  } else {
+    const savedDate = data && data[0] ? data[0].next_visit : nextVisit;
+    alert('Visit completed.\nVisits remaining: ' + remaining + '\nNext visit: ' + (savedDate || 'None'));
+    loadMemberships(); loadUpcoming();
+  }
+};
+
+window.enrollMembership = async function() {
+  const customerId = document.getElementById('mem-customer').value;
+  if (!customerId) { document.getElementById('mem-result').textContent = 'Select a customer'; return; }
+  const tier = document.getElementById('mem-tier').value;
+  const squares = parseFloat(document.getElementById('calc-squares').value) || 0;
+  const mult = parseFloat(document.getElementById('calc-pitch').value) || 1;
+  const extra = Math.max(0, squares - 30) * 8;
+  const bases = { Essential: 299, Premium: 549, 'GAF Preferred': 249, 'GAF Elite': 449 };
+  const annual = Math.round((bases[tier] + extra) * mult);
+  const expires = new Date();
+  expires.setFullYear(expires.getFullYear() + 1);
+  const nextVisit = new Date();
+  // Top tiers (Premium / GAF Elite) = 6 months; others = 1 year
+  if (tier === 'Premium' || tier === 'GAF Elite') {
+    nextVisit.setMonth(nextVisit.getMonth() + 6);
+  } else {
+    nextVisit.setFullYear(nextVisit.getFullYear() + 1);
+  }
+
+  const { error } = await db.from('memberships').insert({
+    customer_id: customerId,
+    tier: tier,
+    squares: squares,
+    pitch_multiplier: mult,
+    annual_price: annual,
+    roof_type: document.getElementById('roof-type').value,
+    roof_age: document.getElementById('roof-age').value,
+    gaf_product: document.getElementById('gaf-product').value,
+    install_date: document.getElementById('install-date').value || null,
+    roof_notes: document.getElementById('roof-notes').value,
+    visits_remaining: (tier === 'Premium' || tier === 'GAF Elite') ? 2 : 1,
+    next_visit: nextVisit.toISOString().split('T')[0],
+    expires_on: expires.toISOString().split('T')[0],
+    status: 'active'
+  });
+  document.getElementById('mem-result').textContent = error ? 'Error: ' + error.message : 'Membership enrolled!';
+  if (!error) loadMemberships(); loadUpcoming();
+};
+
+
+async function loadUpcoming() {
+  const today = new Date();
+  const soon = new Date();
+  soon.setDate(today.getDate() + 10);
+  const todayStr = today.toISOString().slice(0, 10);
+  const soonStr = soon.toISOString().slice(0, 10);
+
+  const { data, error } = await db.from('memberships')
+    .select('*, customers(name)')
+    .gte('next_visit', todayStr)
+    .lte('next_visit', soonStr)
+    .order('next_visit');
+
+  const card = document.getElementById('upcoming-card');
+  const el = document.getElementById('upcoming-list');
+  if (!card || !el) return;
+  if (error || !data || data.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  el.innerHTML = '<table><tr><th>Customer</th><th>Tier</th><th>Next Visit</th><th>Visits Left</th><th>Note</th></tr>' +
+    data.map(m => {
+      const isLast = (m.visits_remaining || 0) <= 1;
+      return `<tr>
+        <td>${m.customers?.name || '—'}</td>
+        <td>${m.tier}</td>
+        <td><strong>${m.next_visit}</strong></td>
+        <td>${m.visits_remaining}</td>
+        <td>${isLast ? '<span style="color:#8B1E1E; font-weight:bold;">Final visit — renew</span>' : 'Scheduled'}</td>
+      </tr>`;
+    }).join('') + '</table>';
+}
+
+async function loadMemberships() {
+  const session = (await db.auth.getSession()).data.session;
+  const userEmail = session?.user?.email;
+  let query = db.from('memberships').select('*, customers(name, email)').order('created_at', { ascending: false });
+  const { data: myCustomer } = await db.from('customers').select('id').eq('email', userEmail).maybeSingle();
+  if (myCustomer) {
+    query = query.eq('customer_id', myCustomer.id);
+  }
+  const { data, error } = await query;
+  const el = document.getElementById('membership-list');
+  if (!el) return;
+  if (error) { el.textContent = 'Error: ' + error.message; return; }
+  let rows = '';
+  if (data && data.length) {
+    rows = data.map(m => {
+      const next = m.next_visit || '—';
+      const roofInfo = [m.roof_type, m.roof_age, m.gaf_product].filter(Boolean).join(' • ') || '—';
+      return `<tr>
+        <td>${m.customers?.name || '—'}</td>
+        <td>${m.tier}</td>
+        <td>$${m.annual_price}</td>
+        <td>${m.visits_remaining ?? '—'}</td>
+        <td><strong>${next}</strong></td>
+        <td>${m.expires_on || '—'}</td>
+        <td>${roofInfo}</td>
+        <td>${m.status}${m.agreement_signature ? ' <span style="color:#27ae60; font-size:0.85em;">✓ Signed</span>' : ''}</td>
+        <td class="visit-action">
+        ${(m.visits_remaining || 0) > 0 ? '<button class="btn" style="padding:4px 8px; font-size:0.8em;" onclick="completeVisit(\''+m.id+'\')">Complete Visit</button>' : 'No visits left'}
+        <button class="btn" style="padding:4px 8px; font-size:0.8em; margin-left:4px;" onclick="openInitial('${m.id}')">Initial Inspection</button>
+        <button class="btn" style="padding:4px 8px; font-size:0.8em; margin-left:4px;" onclick="openAgreement('${m.id}')">View Agreement</button>
+        <button class="btn" style="padding:4px 8px; font-size:0.8em; margin-left:4px;" onclick="invoiceMembership('${m.id}')">Create Invoice</button>
+      </td>
+      </tr>`;
+    }).join('');
+    el.innerHTML = '<table><tr><th>Customer</th><th>Tier</th><th>Price</th><th>Visits Left</th><th>Next Visit</th><th>Expires</th><th>Roof Details</th><th>Status</th><th></th></tr>' + rows + '</table>';
+  } else {
+    el.innerHTML = 'No memberships yet';
+  }
+}
+
+// Also populate membership customer dropdown when loading customers
+const originalLoadCustomers = loadCustomers;
+loadCustomers = async function() {
+  await originalLoadCustomers();
+  const memSelect = document.getElementById('mem-customer');
+  if (memSelect && customersCache) {
+    memSelect.innerHTML = '<option value="">— Select customer —</option>' + 
+      customersCache.map(c => `<option value="${c.id}">${c.name || 'Unnamed'}</option>`).join('');
+  }
+  const invSelect = document.getElementById('inv-customer');
+  if (invSelect && customersCache) {
+    invSelect.innerHTML = '<option value="">— Select customer —</option>' + 
+      customersCache.map(c => `<option value="${c.id}">${c.name || 'Unnamed'}</option>`).join('');
+  }
+};
+window.loadCustomers = loadCustomers;
+
+
+
+let currentSignProposalId = null;
+
+window.openSign = function(id) {
+  currentSignProposalId = id;
+  document.getElementById('sign-modal').style.display = 'block';
+  setTimeout(initSignature, 50);
+};
+
+window.closeSign = function() {
+  document.getElementById('sign-modal').style.display = 'none';
+  clearSignature();
+  currentSignProposalId = null;
+};
+
+window.submitSignature = async function() {
+  if (!currentSignProposalId || !canvas) return;
+  const signature = canvas.toDataURL();
+  if (signature.length < 100) {
+    document.getElementById('sign-msg').textContent = 'Please draw a signature';
+    return;
+  }
+  const { error } = await db.from('proposals').update({ signature: signature, status: 'signed' }).eq('id', currentSignProposalId);
+  if (error) {
+    document.getElementById('sign-msg').textContent = 'Error: ' + error.message;
+  } else {
+    closeSign();
+    loadProposals();
+  }
+};
+
+
+window.createCustomInvoice = async function() {
+  const customerId = document.getElementById('inv-customer').value;
+  const resultEl = document.getElementById('inv-create-result');
+  if (!customerId) { resultEl.textContent = 'Select a customer'; return; }
+  const amount = parseFloat(document.getElementById('inv-amount').value) || 0;
+  const isCommercial = document.getElementById('inv-commercial').checked;
+  const tax = isCommercial ? amount * 0.0825 : 0;
+  const { data, error } = await db.from('invoices').insert({
+    customer_id: customerId,
+    description: document.getElementById('inv-desc').value || 'Custom invoice',
+    subtotal: amount,
+    tax_amount: tax,
+    total: amount + tax,
+    status: 'unpaid'
+  }).select();
+  if (error) {
+    resultEl.textContent = 'Error: ' + error.message;
+    console.error(error);
+    return;
+  }
+  resultEl.textContent = 'Invoice created!';
+  document.getElementById('inv-desc').value = '';
+  document.getElementById('inv-amount').value = '0';
+  document.getElementById('inv-commercial').checked = false;
+  await loadInvoices();
+};
+
+window.markPaid = async function(invoiceId) {
+  const method = document.getElementById('pay-' + invoiceId).value;
+  const { error } = await db.from('invoices').update({ status: 'paid', payment_method: method }).eq('id', invoiceId);
+  if (error) alert('Error: ' + error.message);
+  else loadInvoices();
+};
+
+window.calcPrice = function() {
+  const squares = parseFloat(document.getElementById('calc-squares').value) || 0;
+  const mult = parseFloat(document.getElementById('calc-pitch').value) || 1;
+  const extra = Math.max(0, squares - 30) * 8;
+  const bases = { Essential: 299, Premium: 549, 'GAF Preferred': 249, 'GAF Elite': 449 };
+  const tier = document.getElementById('mem-tier') ? document.getElementById('mem-tier').value : 'Essential';
+  const price = Math.round((bases[tier] + extra) * mult);
+  const el = document.getElementById('calc-results');
+  if (el) el.innerHTML = `Annual price for <strong>${tier}</strong>: <span style="color:#8B1E1E; font-size:1.2em;">$${price}</span>`;
+};
+
+
+function forceHideCustomerControls() {
+  db.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: cust } = await db.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+    if (cust) {
+      document.querySelectorAll('.staff-only').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.customer-only').forEach(el => el.style.display = 'inline');
+      document.querySelectorAll('.visit-action button').forEach(btn => {
+        const text = btn.textContent || '';
+        if (text.includes('Complete Visit') || text.includes('Create Invoice') || text.includes('Initial Inspection')) {
+          btn.style.display = 'none';
+          btn.remove();
+        }
+      });
+      document.querySelectorAll('.convert-btn').forEach(btn => btn.remove());
+      const custNav = document.getElementById('customers-nav');
+      if (custNav) custNav.style.display = 'none';
+    }
+  });
+}
+setInterval(forceHideCustomerControls, 1000);
+
+function hideConvertIfCustomer() {
+  db.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: cust } = await db.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+    if (cust) {
+      document.querySelectorAll('.convert-btn').forEach(btn => {
+        btn.style.display = 'none';
+        btn.remove();
+      });
+      document.querySelectorAll('#create-invoice-card, .card').forEach(card => { if (card.querySelector('h2') && card.querySelector('h2').textContent.includes('Enroll')) card.style.display = 'none'; });
+      document.querySelectorAll('.visit-action, .visit-action button').forEach(el => {
+        el.style.display = 'none';
+        if (el.tagName === 'BUTTON') el.remove();
+      });
+      const custNav = document.getElementById('customers-nav');
+      if (custNav) custNav.style.display = 'none';
+    }
+  });
+}
+// Run after proposals load
+const originalLoadProposals = loadProposals;
+loadProposals = async function() {
+  await originalLoadProposals();
+  hideConvertIfCustomer();
+  setTimeout(hideConvertIfCustomer, 300);
+};
+window.loadProposals = loadProposals;
+
+calcPrice();
+</script>
+</body>
+</html>
